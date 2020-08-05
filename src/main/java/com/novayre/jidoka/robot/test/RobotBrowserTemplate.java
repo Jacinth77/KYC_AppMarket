@@ -9,6 +9,10 @@ import com.novayre.jidoka.client.api.IRobot;
 import com.novayre.jidoka.client.api.JidokaFactory;
 import com.novayre.jidoka.client.api.annotations.Robot;
 import com.novayre.jidoka.client.api.multios.IClient;
+import org.apache.commons.io.FilenameUtils;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Browser robot template. 
@@ -171,8 +175,13 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Read Excel and Add to Queue operations
 	 */
 
-	public void ReadAddQueue() {
-
+	public void ReadAddQueue() throws Exception {
+		String fileNameInput = server.getParameters().get("regionDatasource");
+		Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
+		String fileType = FilenameUtils.getExtension(inputFile.toString());
+		String sourceDir =inputFile.toString();
+		File sourceFile = new File(sourceDir);
+		server.info("sourceFile"+ sourceFile);
 	}
 
 	/**

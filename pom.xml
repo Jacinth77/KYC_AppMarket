@@ -56,10 +56,20 @@
 	</profiles>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>com.novayre.jidoka.module</groupId>
 			<artifactId>jidoka-browser-api</artifactId>
 			<version>${jidoka.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.novayre.jidoka.module</groupId>
+			<artifactId>jidoka-data-provider-api</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 	</dependencies>
 </project>
