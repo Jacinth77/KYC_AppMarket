@@ -1,5 +1,6 @@
 package com.novayre.jidoka.robot.test;
 
+import com.novayre.jidoka.client.api.queue.IQueueManager;
 import org.apache.commons.lang.StringUtils;
 
 import com.novayre.jidoka.browser.api.EBrowsers;
@@ -9,6 +10,16 @@ import com.novayre.jidoka.client.api.IRobot;
 import com.novayre.jidoka.client.api.JidokaFactory;
 import com.novayre.jidoka.client.api.annotations.Robot;
 import com.novayre.jidoka.client.api.multios.IClient;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.support.ui.Select;
+
+import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.concurrent.TimeUnit;
+
+import static sun.tools.java.Constants.OR;
 
 /**
  * Browser robot template. 
@@ -20,6 +31,9 @@ public class RobotBrowserTemplate implements IRobot {
 	 * URL to navigate to.
 	 */
 	private static final String HOME_URL = "https://www.appian.com";
+
+	/** The Queue Manager instance. */
+	private IQueueManager qmanager;
 	
 	/** The JidokaServer instance. */
 	private IJidokaServer<?> server;
@@ -32,6 +46,9 @@ public class RobotBrowserTemplate implements IRobot {
 
 	/** Browser type parameter **/
 	private String browserType = null;
+
+	public  Dictionary<String, String> dict = new Hashtable<String, String>();
+
 
 	/**
 	 * Action "startUp".
@@ -46,6 +63,10 @@ public class RobotBrowserTemplate implements IRobot {
 		client = IClient.getInstance(this);
 		
 		browser = IWebBrowserSupport.getInstance(this, client);
+
+		qmanager = server.getQueueManager();
+
+
 
 		return IRobot.super.startUp();
 
@@ -226,7 +247,15 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to click element
 	 */
 
-	private void Click() {
+	private void Click(String Path,String Value) {
+
+		if (Path.contains("XXINPUTXX")){
+			String ReplaceValue = server.getParameters().get(Value).toString();
+			Path.replace("XXINPUTXX",ReplaceValue);
+		}
+
+		browser.waitElement(By.xpath(Path),10);
+		browser.clickOnElement(By.xpath(Path));
 
 	}
 
@@ -234,7 +263,16 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to read element
 	 */
 
-	private void read() {
+	private void read(String Path,String Key,Integer ValueKey) {
+
+		//if (Path.contains("XXINPUTXX")){
+		//	String Value = dict.get(ValueKey);
+		//	Path.replace("XXINPUTXX",Value);
+		//}
+
+		browser.waitElement(By.xpath(Path),10);
+		String RedValue=browser.getDriver().findElement(By.xpath(Path)).getText();
+		dict.put(Key, RedValue);
 
 	}
 
@@ -242,7 +280,23 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to write element
 	 */
 
-	private void write() {
+	private void write(String Path,String Value,boolean dictionary) {
+
+		if ((Value.toLowerCase()=="customercountry")
+				||  (Value.toLowerCase()=="customer")
+				||  (Value.toLowerCase()=="customerpassport"))
+
+		{
+			Value=server.getParameters().get(Value).toString();
+		}
+
+		if (dictionary){
+			Value = dict.get(Value);
+		}
+
+		browser.waitElement(By.xpath(Path),10);
+		browser.textFieldSet(By.xpath(Path),Value,true);
+		//driver.findElement(By.xpath("//input[@name='FirstName']")).sendKeys("hi");
 
 	}
 
@@ -250,15 +304,26 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to navigate Tab
 	 */
 
-	private void NavigateTab() {
+	private void NavigateTab(String Title) {
 
+		ArrayList<String> tabs2 = new ArrayList<String>(browser.getDriver().getWindowHandles());
+		for (int j = 1; j < tabs2.size(); j++) {
+			browser.getDriver().switchTo().window(tabs2.get(j));
+			String title = browser.getDriver().getTitle();
+
+			if (title==Title){
+				j=tabs2.size();
+			}
+		}
 	}
 
 	/**
 	 * Method to wait for the element
 	 */
 
-	private void Wait() {
+	private void Wait(Integer time) throws InterruptedException {
+
+		TimeUnit.SECONDS.sleep(time);
 
 	}
 
@@ -267,7 +332,12 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to send operations as keyboad strokes
 	 */
 
-	private void SendKeys() {
+	private void SendKeys(String Key) throws InterruptedException {
+
+		//driver.findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL +"\t");
+		TimeUnit.SECONDS.sleep(10);
+		browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Key);
+		//browser.getDriver().findElement(By.xpath(Path)).sendKeys(Key);
 
 	}
 
@@ -275,7 +345,22 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to select items
 	 */
 
-	private void Select() {
+	private void Select(String Id,String Value,Boolean dictionary) {
+
+		if ((Value.toLowerCase()=="customercountry")
+		||  (Value.toLowerCase()=="customer")
+		||  (Value.toLowerCase()=="customerpassport"))
+
+		{
+			Value=server.getParameters().get(Value).toString();
+		}
+
+		if (dictionary){
+			Value = dict.get(Value);
+		}
+
+		Select dropdown = new Select(browser.getDriver().findElement(By.id(Id)));
+		dropdown.selectByVisibleText(Value);
 
 	}
 
