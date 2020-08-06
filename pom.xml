@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.novayre.jidoka.robot.test</groupId>
-	<artifactId>KYC_AppMarket</artifactId>
+	<artifactId>KYC_AppMarketDEV</artifactId>
 	<packaging>jar</packaging>
 	<version>0.0.1</version>
 
@@ -26,7 +26,7 @@
 			<repositories>
 				<repository>
 					<id>jidoka</id>
-					<url>https://infosys-solutions.appiancloud.com/rpa-repo/repository/jidoka/</url>
+					<url>https://infosysdev.appiancloud.com/rpa-repo/repository/jidoka/</url>
 					<releases>
 					</releases>
 					<snapshots>
@@ -37,7 +37,7 @@
 			<pluginRepositories>
 				<pluginRepository>
 					<id>jidoka</id>
-					<url>https://infosys-solutions.appiancloud.com/rpa-repo/repository/jidoka/</url>
+					<url>https://infosysdev.appiancloud.com/rpa-repo/repository/jidoka/</url>
 					<releases>
 					</releases>
 					<snapshots>
@@ -47,7 +47,7 @@
 			<distributionManagement>
 				<repository>
 					<id>jidoka</id>
-					<url>https://infosys-solutions.appiancloud.com/rpa-repo/repository/jidoka/</url>
+					<url>https://infosysdev.appiancloud.com/rpa-repo/repository/jidoka/</url>
 					<layout>default</layout>
 				</repository>
 			</distributionManagement>
@@ -56,10 +56,20 @@
 	</profiles>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>com.novayre.jidoka.module</groupId>
 			<artifactId>jidoka-browser-api</artifactId>
 			<version>${jidoka.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.novayre.jidoka.module</groupId>
+			<artifactId>jidoka-data-provider-api</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 	</dependencies>
 </project>
