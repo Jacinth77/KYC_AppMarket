@@ -1,5 +1,9 @@
 package com.novayre.jidoka.robot.test;
 
+import com.novayre.jidoka.client.api.exceptions.JidokaQueueException;
+import com.novayre.jidoka.client.api.queue.*;
+import com.novayre.jidoka.data.provider.api.IJidokaDataProvider;
+import com.novayre.jidoka.data.provider.api.IJidokaExcelDataProvider;
 import com.novayre.jidoka.client.api.queue.IQueueManager;
 import org.apache.commons.lang.StringUtils;
 
@@ -20,6 +24,13 @@ import java.util.Hashtable;
 import java.util.concurrent.TimeUnit;
 
 import static sun.tools.java.Constants.OR;
+import org.apache.commons.io.FilenameUtils;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Browser robot template. 
@@ -34,18 +45,32 @@ public class RobotBrowserTemplate implements IRobot {
 
 	/** The Queue Manager instance. */
 	private IQueueManager qmanager;
-	
+
 	/** The JidokaServer instance. */
 	private IJidokaServer<?> server;
-	
+	private static final int FIRST_ROW = 0;
 	/** The IClient module. */
 	private IClient client;
-	
+	private ExcelDSRow excelDSRow;
 	/** WebBrowser module */
 	private IWebBrowserSupport browser;
-
+	/** The current item index. */
+	private int currentItemIndex;
 	/** Browser type parameter **/
 	private String browserType = null;
+	/** The IQueueManager instance. *
+	/** The queue commons. */
+	private QueueCommons queueCommons;
+	private String queueID;
+	/** The selected queue ID. */
+	private String selectedQueueID;
+	/** The current item queue. */
+	private IQueueItem currentItemQueue;
+	private IJidokaExcelDataProvider<ExcelDSRow> dataProvider;
+	/** The current queue. */
+	private IQueue currentQueue;
+	private static final String EXCEL_FILENAME = "FILE_NAME";
+	private String excelFile;
 
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
@@ -76,6 +101,11 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Action "start".
 	 */
 	public void start() {
+		qmanager = server.getQueueManager();
+		queueCommons = new QueueCommons();
+		excelDSRow = new ExcelDSRow();
+		queueCommons.init(qmanager);
+		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
 		server.setNumberOfItems(1);
 	}
 
@@ -192,19 +222,109 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Read Excel and Add to Queue operations
 	 */
 
-	public void ReadAddQueue() {
+	public void ReadAddQueue() throws Exception {
+		String fileNameInput = server.getParameters().get("regionDatasource");
+		Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
+		String fileType = FilenameUtils.getExtension(inputFile.toString());
+		String sourceDir =inputFile.toString();
+//		File sourceFile = new File(sourceDir);
+//		server.info("sourceFile"+ sourceFile);
 
+		if (StringUtils.isBlank(qmanager.preselectedQueue())) {
+			excelFile = sourceDir;
+			server.info("Keyvaue: " + excelFile );
+			selectedQueueID = queueCommons.createQueue(excelFile);
+			server.info("Queue ID: " + selectedQueueID);
+			addItemsToQueue();
+
+		} else {
+
+			selectedQueueID = qmanager.preselectedQueue();
+			server.info("Selected queue ID: " + selectedQueueID);
+
+		}
+		currentQueue = queueCommons.getQueueFromId(selectedQueueID);
+		server.info("queue name: " + currentQueue);
+
+		if (currentQueue == null) {
+			server.debug("Queue not found");
+			return;
+		}
+
+		server.setNumberOfItems(currentQueue.pendingItems());
+	}
+
+	private void addItemsToQueue() throws Exception {
+		server.info("add items ");
+		String fileInput = Paths.get(excelFile).toFile().toString();
+		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
+		dataProvider.init(fileInput, null, FIRST_ROW, new ExcelRowMapper());
+		try {
+
+
+			// Get the next row, each row is a item
+			while (dataProvider.nextRow()) {
+				server.info("Inside while");
+
+				ExcelDSRow er = dataProvider.getCurrentItem();
+
+
+				CreateItemParameters itemParameters = new CreateItemParameters();
+
+				// Set the item parameters
+				itemParameters.setKey(er.getField_Name());
+				server.info("Key " + er.getField_Name());
+				itemParameters.setPriority(EPriority.NORMAL);
+				itemParameters.setQueueId(selectedQueueID);
+				itemParameters.setReference(String.valueOf(dataProvider.getCurrentItemNumber()));
+
+				Map<String, String> functionalData = new HashMap<>();
+				functionalData.put(ExcelRowMapper.Field_Name,er.getField_Name());
+				functionalData.put(ExcelRowMapper.Xpath,er.getXpath());
+				functionalData.put(ExcelRowMapper.Value,er.getValue());
+				functionalData.put(ExcelRowMapper.Actions,er.getActions());
+				itemParameters.setFunctionalData(functionalData);
+				qmanager.createItem(itemParameters);
+				server.debug(String.format("Added item to queue %s with id %s", itemParameters.getQueueId(), itemParameters.getKey()));
+			}
+
+		} catch (Exception e) {
+			throw new JidokaQueueException(e);
+		} finally {
+
+			try {
+				// Close the excel file
+				dataProvider.close();
+			} catch (IOException e) {
+				throw new JidokaQueueException(e);
+			}
+		}
 	}
 
 	/**
 	 * Method returns true if there are items in Queue
 	 */
 
-	public boolean HasMoreItems() {
-		Boolean Flag = true;
-		return Flag;
+	public String HasMoreItems() throws Exception {
+		currentItemQueue = queueCommons.getNextItem(currentQueue);
 
+		if (currentItemQueue != null) {
+
+			// set the stats for the current item
+			server.setCurrentItem(currentItemIndex++, currentItemQueue.key());
+			ExcelDSRow exr = new ExcelDSRow();
+			//server.info("first name" + currentItemQueue.functionalData().get(TestPOC.First_Namne));
+			exr.setField_Name(currentItemQueue.functionalData().get(ExcelRowMapper.Field_Name));
+			exr.setXpath(currentItemQueue.functionalData().get(ExcelRowMapper.Xpath));
+			exr.setValue(currentItemQueue.functionalData().get(ExcelRowMapper.Value));
+			exr.setActions(currentItemQueue.functionalData().get(ExcelRowMapper.Actions));
+			return "Yes";
+		}
+
+		return "No";
 	}
+
+
 
 	/**
 	 * Method returns true if there are data present in sheets

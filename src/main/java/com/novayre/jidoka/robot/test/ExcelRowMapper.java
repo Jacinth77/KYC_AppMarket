@@ -1,12 +1,11 @@
 package com.novayre.jidoka.robot.test;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.poi.ss.util.CellReference;
 
 import com.novayre.jidoka.data.provider.api.IExcel;
 import com.novayre.jidoka.data.provider.api.IRowMapper;
 
-public class ExcelRowMapper implements IRowMapper<IExcel, ExcelRow> {
+public class ExcelRowMapper implements IRowMapper<IExcel, ExcelDSRow> {
 
     private static final int Field_Name_col = 0;
 
@@ -42,8 +41,8 @@ public class ExcelRowMapper implements IRowMapper<IExcel, ExcelRow> {
     public static final String Actions ="Actions";
 
     @Override
-    public ExcelRow map(IExcel data, int rowNum) {
-        ExcelRow excel = new ExcelRow();
+    public ExcelDSRow map(IExcel data, int rowNum) {
+        ExcelDSRow excel = new ExcelDSRow();
         excel.setField_Name(data.getCellValueAsString(rowNum, Field_Name_col));
         excel.setXpath(data.getCellValueAsString(rowNum, Xpath_col));
         excel.setValue(data.getCellValueAsString(rowNum, Value_col));
@@ -53,13 +52,13 @@ public class ExcelRowMapper implements IRowMapper<IExcel, ExcelRow> {
     }
 
     @Override
-    public void update(IExcel data, int rowNum, ExcelRow rowData) {
+    public void update(IExcel data, int rowNum, ExcelDSRow rowData) {
 
     }
 
 
     @Override
-    public boolean isLastRow(ExcelRow instance) {
+    public boolean isLastRow(ExcelDSRow instance) {
 
         return instance == null || StringUtils.isBlank(instance.getField_Name());
     }
