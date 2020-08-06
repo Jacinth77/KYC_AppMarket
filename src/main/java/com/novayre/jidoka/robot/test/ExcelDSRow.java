@@ -8,7 +8,7 @@ import java.io.Serializable;
  *
  * @author Jidoka
  */
-public class ExcelRow implements Serializable {
+public class ExcelDSRow implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
