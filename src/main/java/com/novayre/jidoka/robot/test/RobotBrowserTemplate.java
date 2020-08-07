@@ -41,7 +41,7 @@ public class RobotBrowserTemplate implements IRobot {
 	/**
 	 * URL to navigate to.
 	 */
-	private static final String HOME_URL = "https://www.appian.com";
+	public String HOME_URL = "";
 
 	/** The Queue Manager instance. */
 	private IQueueManager qmanager;
@@ -61,6 +61,7 @@ public class RobotBrowserTemplate implements IRobot {
 	/** The IQueueManager instance. *
 	/** The queue commons. */
 	private QueueCommons queueCommons;
+	public  Integer count = 1;
 	private String queueID;
 	/** The selected queue ID. */
 	private String selectedQueueID;
@@ -71,6 +72,7 @@ public class RobotBrowserTemplate implements IRobot {
 	private IQueue currentQueue;
 	private static final String EXCEL_FILENAME = "FILE_NAME";
 	private String excelFile;
+	private ExcelDSRow exr;
 
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
@@ -91,6 +93,7 @@ public class RobotBrowserTemplate implements IRobot {
 
 		qmanager = server.getQueueManager();
 
+        exr = new ExcelDSRow();
 
 
 		return IRobot.super.startUp();
@@ -142,6 +145,8 @@ public class RobotBrowserTemplate implements IRobot {
 			client.pause(3000);
 		}
 
+        navigateToWeb();
+
 	}
 
 	/**
@@ -150,6 +155,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 * @throws Exception
 	 */
 	public void navigateToWeb() throws Exception  {
+
 		
 		server.setCurrentItem(1, HOME_URL);
 		
@@ -223,27 +229,21 @@ public class RobotBrowserTemplate implements IRobot {
 	 */
 
 	public void ReadAddQueue() throws Exception {
-		String fileNameInput = server.getParameters().get("regionDatasource");
+		String fileNameInput = server.getParameters().get("RegionDatasource");
 		Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
 		String fileType = FilenameUtils.getExtension(inputFile.toString());
 		String sourceDir =inputFile.toString();
 //		File sourceFile = new File(sourceDir);
 //		server.info("sourceFile"+ sourceFile);
 
-		if (StringUtils.isBlank(qmanager.preselectedQueue())) {
-			excelFile = sourceDir;
-			server.info("Keyvaue: " + excelFile );
-			selectedQueueID = queueCommons.createQueue(excelFile);
-			server.info("Queue ID: " + selectedQueueID);
-			addItemsToQueue();
+        excelFile = sourceDir;
+        server.info("Keyvaue: " + excelFile );
+        selectedQueueID = queueCommons.createQueue(excelFile);
+        server.info("Queue ID: " + selectedQueueID);
+        addItemsToQueue();
 
-		} else {
-
-			selectedQueueID = qmanager.preselectedQueue();
-			server.info("Selected queue ID: " + selectedQueueID);
-
-		}
 		currentQueue = queueCommons.getQueueFromId(selectedQueueID);
+
 		server.info("queue name: " + currentQueue);
 
 		if (currentQueue == null) {
@@ -312,12 +312,14 @@ public class RobotBrowserTemplate implements IRobot {
 
 			// set the stats for the current item
 			server.setCurrentItem(currentItemIndex++, currentItemQueue.key());
-			ExcelDSRow exr = new ExcelDSRow();
+			//ExcelDSRow exr = new ExcelDSRow();
 			//server.info("first name" + currentItemQueue.functionalData().get(TestPOC.First_Namne));
 			exr.setField_Name(currentItemQueue.functionalData().get(ExcelRowMapper.Field_Name));
 			exr.setXpath(currentItemQueue.functionalData().get(ExcelRowMapper.Xpath));
 			exr.setValue(currentItemQueue.functionalData().get(ExcelRowMapper.Value));
 			exr.setActions(currentItemQueue.functionalData().get(ExcelRowMapper.Actions));
+
+			server.info("Operations inhas no more items"+exr.getActions());
 			return "Yes";
 		}
 
@@ -330,19 +332,33 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method returns true if there are data present in sheets
 	 */
 
-	public boolean HasMoreSheets() {
-		Boolean Flag = true;
-		return Flag;
+    public String HasMoreSheets() {
+        int sheetCount =dataProvider.getExcel().getWorkbook().getNumberOfSheets();
+        server.info("sheetCount" + sheetCount);
+        if(count<sheetCount){
+            count=count+1;
+            return "yes";
 
-	}
+        }
+        return "no";
+    }
 
 	/**
 	 * Method returns true if retry count is lesser than 3
 	 */
 
-	public boolean RetryRequired() {
-		Boolean Flag = true;
-		return Flag;
+	public String RetryRequired() {
+		String  Flag = "No";
+		if (currentItemIndex == 10000) {
+
+            return "yes";
+        }
+		else if (currentItemIndex == 10000){
+            return "MaxRetryReached";
+        }
+		else{
+		    return "No";
+        }
 
 	}
 
@@ -359,20 +375,107 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method will call corresponding methods based on queue operation
 	 */
 
-	public void  QueueOperations() {
+	public void  QueueOperations() throws Exception {
 
 
-	}
+        server.info("Operations --"+exr.getActions());
+
+        if (exr.getActions().contains("Click") ) {
+            Click(exr.getXpath().trim(), exr.getValue().trim());
+        } else if (exr.getActions().contains("Switch tab")) {
+            NavigateTab(exr.getValue().trim());
+        } else if (exr.getActions().contains("SendKey")) {
+            SendKeys(exr.getValue().trim());
+        } else if (exr.getActions().contains("URL") ) {
+            HOME_URL = exr.getValue().trim();
+            openBrowser();
+        } else if (exr.getActions().contains("Read")) {
+            read(exr.getXpath().trim(), exr.getValue().trim());
+
+        } else if (exr.getActions().contains("Write") ) {
+            write(exr.getXpath().trim(), exr.getValue().trim());
+
+        } else if (exr.getActions().contains("Select")) {
+
+            Select(exr.getXpath().trim(), exr.getValue().trim());
+
+        } else if (exr.getActions().contains("CopyDatatoExcel")) {
+
+            Select(exr.getXpath().trim(), exr.getValue().trim());
+
+        } else if (exr.getActions().contains("UploadfilestoAppian")) {
+
+
+        } else if (exr.getActions().contains("UpdateAppianDB")) {
+
+
+        }
+    }
+
+        /*
+         * Update item queue. This method is a sample to show how toupdate the first
+         * element on the functional data map by adding the text " - MODIFIED"
+         *
+         * @throws JidokaQueueException the Jidoka queue exception
+         */
+        public void updateItemQueue() throws JidokaQueueException, InterruptedException {
+
+            Map<String, String> funcData = currentItemQueue.functionalData();
+
+            String firstKey = funcData.keySet().iterator().next();
+
+            try {
+
+                funcData.put(firstKey, funcData.get(firstKey) + " - Completed");
+
+                // release the item. The queue item result will be the same
+
+                ReleaseItemWithOptionalParameters rip = new ReleaseItemWithOptionalParameters();
+                rip.functionalData(funcData);
+
+                // Is mandatory to set the current item result before releasing the queue item
+                server.setCurrentItemResultToOK(currentItemQueue.key());
+
+                qmanager.releaseItem(rip);
+
+            } catch (JidokaQueueException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new JidokaQueueException(e);
+            }
+        }
+
+
 	/**
 	 * Method to click element
 	 */
 
 	private void Click(String Path,String Value) {
 
-		if (Path.contains("XXINPUTXX")){
-			String ReplaceValue = server.getParameters().get(Value).toString();
-			Path.replace("XXINPUTXX",ReplaceValue);
+		if (Path.contains("XXINPUTXX"))
+		{
+			String ReplacePath = server.getParameters().get(Value).toString();
+			Path.replace("XXINPUTXX",ReplacePath);
 		}
+
+        if (Path.contains("XXRead"))
+        {
+            String ReplaceValue = dict.get(Value);
+            Path.replace("XXRead",ReplaceValue);
+        }
+
+       if (Value.toLowerCase().trim().contains("customercountry")
+                ||  Value.toLowerCase().trim().contains("customername")
+                ||  Value.toLowerCase().trim().contains("customerpassport"))
+
+        {
+            Value=server.getParameters().get(Value).toString();
+        }
+
+        if (Value.contains("XXRead"))
+        {
+            Value = dict.get(Value);
+        }
 
 		browser.waitElement(By.xpath(Path),10);
 		browser.clickOnElement(By.xpath(Path));
@@ -383,7 +486,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to read element
 	 */
 
-	private void read(String Path,String Key,Integer ValueKey) {
+	private void read(String Path,String Key) {
 
 		//if (Path.contains("XXINPUTXX")){
 		//	String Value = dict.get(ValueKey);
@@ -400,21 +503,41 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to write element
 	 */
 
-	private void write(String Path,String Value,boolean dictionary) {
+	private void write(String Path,String Value) {
 
-		if ((Value.toLowerCase()=="customercountry")
-				||  (Value.toLowerCase()=="customer")
-				||  (Value.toLowerCase()=="customerpassport"))
+	    server.info("Write value"+ Value.toLowerCase().trim());
 
-		{
-			Value=server.getParameters().get(Value).toString();
-		}
+        if (Path.contains("XXINPUTXX"))
+        {
+            String ReplacePath = server.getParameters().get(Value).toString();
+            Path.replace("XXINPUTXX",ReplacePath);
+        }
 
-		if (dictionary){
-			Value = dict.get(Value);
-		}
+        if (Path.contains("XXRead"))
+        {
+            String ReplaceValue = dict.get(Value);
+            Path.replace("XXRead",ReplaceValue);
+        }
 
-		browser.waitElement(By.xpath(Path),10);
+        
+
+        if  (Value.toLowerCase().trim().contains("customercountry")
+                ||  Value.toLowerCase().trim().contains("customername")
+                ||  Value.toLowerCase().trim().contains("customerpassport"))
+
+        {
+            server.info("Inside");
+            Value=server.getParameters().get(Value).toString();
+            server.info(Value);
+        }
+
+        if (Value.contains("XXRead"))
+        {
+            Value = dict.get(Value);
+        }
+
+
+        browser.waitElement(By.xpath(Path),10);
 		browser.textFieldSet(By.xpath(Path),Value,true);
 		//driver.findElement(By.xpath("//input[@name='FirstName']")).sendKeys("hi");
 
@@ -465,17 +588,18 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to select items
 	 */
 
-	private void Select(String Id,String Value,Boolean dictionary) {
+	private void Select(String Id,String Value) {
 
-		if ((Value.toLowerCase()=="customercountry")
-		||  (Value.toLowerCase()=="customer")
-		||  (Value.toLowerCase()=="customerpassport"))
+		if (Value.toLowerCase().trim().contains("customercountry")
+                ||  Value.toLowerCase().trim().contains("customername")
+                ||  Value.toLowerCase().trim().contains("customerpassport"))
 
 		{
 			Value=server.getParameters().get(Value).toString();
 		}
 
-		if (dictionary){
+		if (Value.contains("XXRead"))
+		{
 			Value = dict.get(Value);
 		}
 
@@ -512,6 +636,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Last action of the robot.
 	 */
 	public void end()  {
+
 		server.info("End process");
 	}
 	
