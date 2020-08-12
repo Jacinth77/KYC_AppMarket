@@ -1,10 +1,14 @@
 package com.novayre.jidoka.robot.test;
 
+import com.novayre.jidoka.client.api.IKeyboard;
 import com.novayre.jidoka.client.api.exceptions.JidokaQueueException;
 import com.novayre.jidoka.client.api.queue.*;
+import com.novayre.jidoka.data.provider.api.EExcelType;
+import com.novayre.jidoka.data.provider.api.IExcel;
 import com.novayre.jidoka.data.provider.api.IJidokaDataProvider;
 import com.novayre.jidoka.data.provider.api.IJidokaExcelDataProvider;
 import com.novayre.jidoka.client.api.queue.IQueueManager;
+import com.sun.java.swing.plaf.windows.resources.windows;
 import org.apache.commons.lang.StringUtils;
 
 import com.novayre.jidoka.browser.api.EBrowsers;
@@ -14,10 +18,15 @@ import com.novayre.jidoka.client.api.IRobot;
 import com.novayre.jidoka.client.api.JidokaFactory;
 import com.novayre.jidoka.client.api.annotations.Robot;
 import com.novayre.jidoka.client.api.multios.IClient;
+import org.apache.poi.ss.formula.functions.Count;
+import org.apache.poi.ss.usermodel.Row;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.Select;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -56,23 +65,29 @@ public class RobotBrowserTemplate implements IRobot {
 	private IWebBrowserSupport browser;
 	/** The current item index. */
 	private int currentItemIndex;
+
+	private IKeyboard keyboard;
 	/** Browser type parameter **/
 	private String browserType = null;
 	/** The IQueueManager instance. *
 	/** The queue commons. */
 	private QueueCommons queueCommons;
-	public  Integer count = 1;
+	public  Integer CurrentSheetCount = 1;
 	private String queueID;
 	/** The selected queue ID. */
 	private String selectedQueueID;
 	/** The current item queue. */
 	private IQueueItem currentItemQueue;
 	private IJidokaExcelDataProvider<ExcelDSRow> dataProvider;
+	private Robot robot;
 	/** The current queue. */
 	private IQueue currentQueue;
 	private static final String EXCEL_FILENAME = "FILE_NAME";
 	private String excelFile;
 	private ExcelDSRow exr;
+	private IExcel excel;
+	private Boolean exceptionflag = false;
+	private Integer RetryCount = 0;
 
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
@@ -93,7 +108,7 @@ public class RobotBrowserTemplate implements IRobot {
 
 		qmanager = server.getQueueManager();
 
-        exr = new ExcelDSRow();
+        //exr = new ExcelDSRow();
 
 
 		return IRobot.super.startUp();
@@ -110,6 +125,7 @@ public class RobotBrowserTemplate implements IRobot {
 		queueCommons.init(qmanager);
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
 		server.setNumberOfItems(1);
+		excel = IExcel.getExcelInstance(this);
 	}
 
 
@@ -226,7 +242,7 @@ public class RobotBrowserTemplate implements IRobot {
 
 	/**
 	 * Read Excel and Add to Queue operations
-	 */
+
 
 	public void ReadAddQueue() throws Exception {
 		String fileNameInput = server.getParameters().get("RegionDatasource");
@@ -240,7 +256,7 @@ public class RobotBrowserTemplate implements IRobot {
         server.info("Keyvaue: " + excelFile );
         selectedQueueID = queueCommons.createQueue(excelFile);
         server.info("Queue ID: " + selectedQueueID);
-        addItemsToQueue();
+        //addItemsToQueue();
 
 		currentQueue = queueCommons.getQueueFromId(selectedQueueID);
 
@@ -252,24 +268,69 @@ public class RobotBrowserTemplate implements IRobot {
 		}
 
 		server.setNumberOfItems(currentQueue.pendingItems());
-	}
+	}*/
 
-	private void addItemsToQueue() throws Exception {
+	public void PerformOperation() throws Exception {
+
 		server.info("add items ");
+		String SheetName = "Datasource"+ Integer.toString(CurrentSheetCount);
 		String fileInput = Paths.get(excelFile).toFile().toString();
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
-		dataProvider.init(fileInput, null, FIRST_ROW, new ExcelRowMapper());
+		dataProvider.init(fileInput, SheetName, FIRST_ROW, new ExcelRowMapper());
 		try {
 
 
 			// Get the next row, each row is a item
 			while (dataProvider.nextRow()) {
-				server.info("Inside while");
 
-				ExcelDSRow er = dataProvider.getCurrentItem();
+				ExcelDSRow exr = dataProvider.getCurrentItem();
+				server.info("Operations --"+exr.getActions());
+
+				if (exr.getActions().contains("Click") )
+				{
+					Click(exr.getXpath().trim(), exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("Switch tab"))
+				{
+					NavigateTab(exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("SendKey"))
+				{
+					SendKeys(exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("URL") )
+				{
+					HOME_URL = exr.getValue().trim();
+					openBrowser();
+				}
+				else if (exr.getActions().contains("Read"))
+				{
+					read(exr.getXpath().trim(), exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("Write") )
+				{
+					write(exr.getXpath().trim(), exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("Select"))
+				{
+					Select(exr.getXpath().trim(), exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("CopyDatatoExcel"))
+				{
+					CopyDatatoExcel(exr.getValue().trim());
+				}
+				else if (exr.getActions().contains("UploadfilestoAppian"))
+				{
+					UploadfilestoAppian();
+				}
+				else if (exr.getActions().contains("UpdateAppianDB"))
+				{
+					UpdateAppianDB();
+				}
 
 
-				CreateItemParameters itemParameters = new CreateItemParameters();
+
+				/*CreateItemParameters itemParameters = new CreateItemParameters();
 
 				// Set the item parameters
 				itemParameters.setKey(er.getField_Name());
@@ -286,24 +347,30 @@ public class RobotBrowserTemplate implements IRobot {
 				itemParameters.setFunctionalData(functionalData);
 				qmanager.createItem(itemParameters);
 				server.debug(String.format("Added item to queue %s with id %s", itemParameters.getQueueId(), itemParameters.getKey()));
+				*/
 			}
 
 		} catch (Exception e) {
-			throw new JidokaQueueException(e);
-		} finally {
+
+			exceptionflag = true;
+
+		}
+
+		finally {
 
 			try {
 				// Close the excel file
 				dataProvider.close();
 			} catch (IOException e) {
-				throw new JidokaQueueException(e);
+				//throw new JidokaQueueException(e);
+				dataProvider.flush();
 			}
 		}
 	}
 
 	/**
 	 * Method returns true if there are items in Queue
-	 */
+
 
 	public String HasMoreItems() throws Exception {
 		currentItemQueue = queueCommons.getNextItem(currentQueue);
@@ -335,8 +402,9 @@ public class RobotBrowserTemplate implements IRobot {
     public String HasMoreSheets() {
         int sheetCount =dataProvider.getExcel().getWorkbook().getNumberOfSheets();
         server.info("sheetCount" + sheetCount);
-        if(count<sheetCount){
-            count=count+1;
+        if(CurrentSheetCount<sheetCount){
+			CurrentSheetCount=CurrentSheetCount+1;
+
             return "yes";
 
         }
@@ -348,13 +416,18 @@ public class RobotBrowserTemplate implements IRobot {
 	 */
 
 	public String RetryRequired() {
-		String  Flag = "No";
-		if (currentItemIndex == 10000) {
 
-            return "yes";
-        }
-		else if (currentItemIndex == 10000){
-            return "MaxRetryReached";
+		if (exceptionflag) {
+
+			if (RetryCount < 3)
+			{
+				RetryCount = RetryCount + 1;
+				return "yes";
+			}
+			else
+			{
+				return "MaxCountReached";
+			}
         }
 		else{
 		    return "No";
@@ -362,18 +435,10 @@ public class RobotBrowserTemplate implements IRobot {
 
 	}
 
-	/**
-	 * Method clear all items in the given queue
-	 */
-
-	public void  clearqueue() {
-
-
-	}
 
 	/**
 	 * Method will call corresponding methods based on queue operation
-	 */
+
 
 	public void  QueueOperations() throws Exception {
 
@@ -401,7 +466,7 @@ public class RobotBrowserTemplate implements IRobot {
 
         } else if (exr.getActions().contains("CopyDatatoExcel")) {
 
-            Select(exr.getXpath().trim(), exr.getValue().trim());
+            CopyDatatoExcel(exr.getValue().trim());
 
         } else if (exr.getActions().contains("UploadfilestoAppian")) {
 
@@ -590,6 +655,9 @@ public class RobotBrowserTemplate implements IRobot {
 
 	private void Select(String Id,String Value) {
 
+		//Selectselect= new Select (driver.findElement(locator));
+		//select.selectByVisibleText(value);
+
 		if (Value.toLowerCase().trim().contains("customercountry")
                 ||  Value.toLowerCase().trim().contains("customername")
                 ||  Value.toLowerCase().trim().contains("customerpassport"))
@@ -612,10 +680,42 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to CopyDatatoExcel
 	 */
 
-	private void CopyDatatoExcel() {
+	private void CopyDatatoExcel(String document) throws Exception {
+
+		createexcel(document);
+		TimeUnit.SECONDS.sleep(5);
+		Desktop.getDesktop().open(Paths.get(server.getCurrentDir(), "Datasource.xlsx").toFile());
+		TimeUnit.SECONDS.sleep(5);
+		client.typeText(client.getKeyboardSequence().pressControl().type("v").releaseControl());
+		TimeUnit.SECONDS.sleep(5);
+		client.typeText(client.getKeyboardSequence().pressControl().type("s").releaseControl());
+		TimeUnit.SECONDS.sleep(5);
+		Runtime.getRuntime().exec("taskkill /F /IM EXCEL.exe");
+
 
 	}
 
+	private void createexcel(String document) throws Exception {
+		String robotDir = server.getCurrentDir();
+		this.server.info("robotDir  " + robotDir);
+		//String name = "Documents available for " + service + ".xls";
+
+		String name = document+".XLSX";
+
+		File file = Paths.get(robotDir, name).toFile();
+		String excelPath = file.getAbsolutePath();
+
+		server.info(excelPath);
+
+		//String sheet = "Source";
+		excel.create(excelPath, EExcelType.XLSX);
+		Row row = excel.getSheet().createRow(0);
+		/*row.createCell(0).setCellValue(service);
+		CellStyle cellStyle = excel.getWorkbook().createCellStyle();
+		cellStyle.setAlignment(HorizontalAlignment.CENTER);
+		cellStyle.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
+		cellStyle.setFillBackgroundColor(IndexedColors.BLUE.getIndex());*/
+	}
 	/**
 	 * Method to UploadfilestoAppian
 	 */
