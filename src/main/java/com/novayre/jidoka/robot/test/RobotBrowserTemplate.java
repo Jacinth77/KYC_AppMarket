@@ -1,10 +1,16 @@
 package com.novayre.jidoka.robot.test;
 
+import com.novayre.jidoka.client.api.appian.IAppian;
+import com.novayre.jidoka.client.api.appian.webapi.IWebApiRequest;
+import com.novayre.jidoka.client.api.appian.webapi.IWebApiRequestBuilderFactory;
+import com.novayre.jidoka.client.api.appian.webapi.IWebApiResponse;
 import com.novayre.jidoka.client.api.exceptions.JidokaQueueException;
 import com.novayre.jidoka.client.api.queue.*;
+import com.novayre.jidoka.client.lowcode.IRobotVariable;
 import com.novayre.jidoka.data.provider.api.IJidokaDataProvider;
 import com.novayre.jidoka.data.provider.api.IJidokaExcelDataProvider;
 import com.novayre.jidoka.client.api.queue.IQueueManager;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.novayre.jidoka.browser.api.EBrowsers;
@@ -18,9 +24,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.support.ui.Select;
 
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static sun.tools.java.Constants.OR;
@@ -29,8 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Browser robot template. 
@@ -156,7 +158,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 */
 	public void navigateToWeb() throws Exception  {
 
-		
+
 		server.setCurrentItem(1, HOME_URL);
 		
 		// Navegate to HOME_URL address
@@ -171,12 +173,8 @@ public class RobotBrowserTemplate implements IRobot {
 	/**
 	 * @see com.novayre.jidoka.client.api.IRobot#cleanUp()
 	 */
-	@Override
-	public String[] cleanUp() throws Exception {
-		
-		browserCleanUp();
-		return null;
-	}
+
+
 
 	/**
 	 * Close the browser.
@@ -258,7 +256,7 @@ public class RobotBrowserTemplate implements IRobot {
 		server.info("add items ");
 		String fileInput = Paths.get(excelFile).toFile().toString();
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
-		dataProvider.init(fileInput, null, FIRST_ROW, new ExcelRowMapper());
+		dataProvider.init(fileInput, "DataSource"+count, FIRST_ROW, new ExcelRowMapper());
 		try {
 
 
@@ -519,7 +517,7 @@ public class RobotBrowserTemplate implements IRobot {
             Path.replace("XXRead",ReplaceValue);
         }
 
-        
+
 
         if  (Value.toLowerCase().trim().contains("customercountry")
                 ||  Value.toLowerCase().trim().contains("customername")
@@ -620,9 +618,26 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to UploadfilestoAppian
 	 */
 
-	private void UploadfilestoAppian() {
+	private void getFileLocation(String path) throws Exception {
+		File attachmentsDir = new File(path);
+		server.debug("Looking for files in: " + attachmentsDir.getAbsolutePath());
+		File[] filesToUpload = Objects.<File[]>requireNonNull(attachmentsDir.listFiles());
+		String filename = attachmentsDir.getAbsolutePath() + "\\Documents available for DataSource Result .xls";
+		File fileUpload = new File(filename);
 
 	}
+	private void setAppianData(File file) throws Exception{
+		// Gets the map of workflow variables containing those defined into the robot configuration page
+		Map<String, IRobotVariable> variables = server.getWorkflowVariables();
+
+// Gets the variable called "var1"
+		IRobotVariable rv = variables.get("var1");
+
+// Updates the value of var1 to the current value of item
+		rv.setValue(file);
+	}
+
+
 
 	/**
 	 * Method to UpdateAppianDB
@@ -639,5 +654,35 @@ public class RobotBrowserTemplate implements IRobot {
 
 		server.info("End process");
 	}
-	
+
+	public String[] cleanUp() throws Exception {
+		HashMap<String, String> req = new HashMap<>();
+		// Constructs the execution ID to pass to the web API
+		String executionId = server.getExecution(0).getRobotName() + "#" +
+				server.getExecution(0).getCurrentExecution().getExecutionNumber();
+		server.info(executionId);
+		req.put("Execution Id ",executionId);
+		req.put("Case id", "1234");
+		// Calls the notifyProcessOfCompletion web API and passes the execution ID
+		IAppian appian = IAppian.getInstance(this);
+		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance()
+				//.post("notifyRPACompletionStatus")
+				.post(server.getEnvironmentVariables().get("NotifyAppianEndpoint").toString())
+				.body(req.toString())
+				.build();
+		server.info("Webapi-Request" + request.getQueryParameters());
+		IWebApiResponse response = appian.callWebApi(request);
+
+		// Displays the result of the web API in the execution log for easy debugging
+		server.info("Response body: " + new String(response.getBodyBytes()));
+		String directory= "D:\\Output file\\";
+		FileUtils.cleanDirectory((new File(directory)));
+		browserCleanUp();
+		return  new String[0] ;
+	}
+
+
 }
+
+	
+

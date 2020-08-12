@@ -116,6 +116,7 @@ public class QueueCommons {
      */
     public void setQmanager(IQueueManager qmanager) {
         this.qmanager = qmanager;
+        
     }
 
     /**
