@@ -4,7 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b5d70df7-0e2a-4fa3-9255-b3e9e0582341" name="Default Changelist" comment="" />
+    <list default="true" id="b5d70df7-0e2a-4fa3-9255-b3e9e0582341" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/novayre/jidoka/robot/test/RobotBrowserTemplate.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/novayre/jidoka/robot/test/RobotBrowserTemplate.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/META-INF/RobotBrowserTemplate.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/META-INF/RobotBrowserTemplate.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/KYC_AppMarketDEV-0.0.1-sources.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/KYC_AppMarketDEV-0.0.1.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/META-INF/RobotBrowserTemplate.json" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/META-INF/RobotBrowserTemplate.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/QueueCommons.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/QueueCommons.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/RobotBrowserTemplate$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/RobotBrowserTemplate$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/RobotBrowserTemplate.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/novayre/jidoka/robot/test/RobotBrowserTemplate.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-archiver/pom.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -61,7 +73,14 @@
       <option name="project" value="LOCAL" />
       <updated>1597241797249</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Success">
+      <created>1597650524510</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1597650524510</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -73,30 +92,30 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="100" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1366.728@0.0.1366.728" timestamp="1596696554362" />
-    <state x="283" y="0" key="CommitChangelistDialog2" timestamp="1597241794900">
+    <state x="283" y="0" key="CommitChangelistDialog2" timestamp="1597650520680">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state x="283" y="0" key="CommitChangelistDialog2/0.0.1366.728@0.0.1366.728" timestamp="1597241794900" />
-    <state x="463" y="119" key="FileChooserDialogImpl" timestamp="1597034874206">
+    <state x="283" y="0" key="CommitChangelistDialog2/0.0.1366.728@0.0.1366.728" timestamp="1597650520680" />
+    <state x="463" y="119" key="FileChooserDialogImpl" timestamp="1597727968628">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state x="463" y="119" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1597034874206" />
-    <state width="1323" height="179" key="GridCell.Tab.0.bottom" timestamp="1596723270898">
+    <state x="463" y="119" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1597727968628" />
+    <state width="1323" height="179" key="GridCell.Tab.0.bottom" timestamp="1597766744747">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1323" height="179" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1596723270898" />
-    <state width="1323" height="179" key="GridCell.Tab.0.center" timestamp="1596723270898">
+    <state width="1323" height="179" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1597766744747" />
+    <state width="1323" height="179" key="GridCell.Tab.0.center" timestamp="1597766744747">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1323" height="179" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1596723270898" />
-    <state width="1323" height="179" key="GridCell.Tab.0.left" timestamp="1596723270898">
+    <state width="1323" height="179" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1597766744747" />
+    <state width="1323" height="179" key="GridCell.Tab.0.left" timestamp="1597766744747">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1323" height="179" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1596723270898" />
-    <state width="1323" height="179" key="GridCell.Tab.0.right" timestamp="1596723270898">
+    <state width="1323" height="179" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1597766744747" />
+    <state width="1323" height="179" key="GridCell.Tab.0.right" timestamp="1597766744747">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1323" height="179" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1596723270898" />
+    <state width="1323" height="179" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1597766744747" />
     <state x="168" y="38" key="MergeDialog" timestamp="1596781203620">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
@@ -105,10 +124,10 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="275" y="97" key="Vcs.Push.Dialog.v2/0.0.1366.728@0.0.1366.728" timestamp="1597241816725" />
-    <state x="500" y="278" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1596780439723">
+    <state x="500" y="278" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1597650528633">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state x="500" y="278" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1366.728@0.0.1366.728" timestamp="1596780439723" />
+    <state x="500" y="278" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1366.728@0.0.1366.728" timestamp="1597650528633" />
     <state x="346" y="49" width="672" height="678" key="search.everywhere.popup" timestamp="1597035718270">
       <screen x="0" y="0" width="1366" height="728" />
     </state>

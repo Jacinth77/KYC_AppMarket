@@ -70,7 +70,7 @@ public class RobotBrowserTemplate implements IRobot {
 	private IWebBrowserSupport browser;
 	/** The current item index. */
 	private int currentItemIndex;
-
+	private String maxCountReached = "MaxCountReached";
 	private IKeyboard keyboard;
 	/** Browser type parameter **/
 	private String browserType = null;
@@ -93,7 +93,8 @@ public class RobotBrowserTemplate implements IRobot {
 	private IExcel excel;
 	private Boolean exceptionflag = false;
 	private Integer RetryCount = 0;
-
+	private String Sheetname;
+	private String documentId;
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
 
@@ -274,14 +275,14 @@ public class RobotBrowserTemplate implements IRobot {
 	public void PerformOperation() throws Exception {
 
 		server.info("add items ");
-        String fileNameInput = server.getParameters().get("RegionDatasource");
+        String fileNameInput = server.getParameters().get("regionDatasource");
         Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
         String fileType = FilenameUtils.getExtension(inputFile.toString());
         String sourceDir =inputFile.toString();
         excelFile = sourceDir;
 		String fileInput = Paths.get(excelFile).toFile().toString();
 
-		String Sheetname = "Datasource"+ CurrentSheetCount;
+		Sheetname = "Datasource"+ CurrentSheetCount;
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
 		dataProvider.init(fileInput, Sheetname, FIRST_ROW, new ExcelRowMapper());
 		try {
@@ -324,16 +325,16 @@ public class RobotBrowserTemplate implements IRobot {
 				}
 				else if (exr.getActions().contains("CopyDatatoExcel"))
 				{
-					CopyDatatoExcel(exr.getValue().trim());
+					CopyDatatoExcel();
 				}
 				else if (exr.getActions().contains("SetFilePath"))
 				{
                     getFileLocation(exr.getValue().trim());
 				}
-				else if (exr.getActions().contains("UpdateAppianDB"))
-				{
-					UpdateAppianDB();
-				}
+//				else if (exr.getActions().contains("UpdateAppianDB"))
+//				{
+//					UpdateAppianDB();
+//				}
 
 
 
@@ -358,8 +359,9 @@ public class RobotBrowserTemplate implements IRobot {
 			}
 
 		} catch (Exception e) {
-
+			server.info(e);
 			exceptionflag = true;
+
 
 		}
 
@@ -434,7 +436,7 @@ public class RobotBrowserTemplate implements IRobot {
 			}
 			else
 			{
-				return "MaxCountReached";
+				return maxCountReached;
 			}
         }
 		else{
@@ -688,11 +690,11 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to CopyDatatoExcel
 	 */
 
-	private void CopyDatatoExcel(String document) throws Exception {
+	private void CopyDatatoExcel() throws Exception {
 
-		createexcel(document);
+		createexcel(Sheetname);
 		TimeUnit.SECONDS.sleep(5);
-		Desktop.getDesktop().open(Paths.get(server.getCurrentDir(), "Datasource.xlsx").toFile());
+		Desktop.getDesktop().open(Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx").toFile());
 		TimeUnit.SECONDS.sleep(5);
 		client.typeText(client.getKeyboardSequence().pressControl().type("v").releaseControl());
 		TimeUnit.SECONDS.sleep(5);
@@ -703,12 +705,12 @@ public class RobotBrowserTemplate implements IRobot {
 
 	}
 
-	private void createexcel(String document) throws Exception {
+	private void createexcel(String documentName) throws Exception {
 		String robotDir = server.getCurrentDir();
 		this.server.info("robotDir  " + robotDir);
 		//String name = "Documents available for " + service + ".xls";
 
-		String name = document+".XLSX";
+		String name = documentName+".XLSX";
 
 		File file = Paths.get(robotDir, name).toFile();
 		String excelPath = file.getAbsolutePath();
@@ -734,31 +736,45 @@ public class RobotBrowserTemplate implements IRobot {
 		File[] filesToUpload = Objects.<File[]>requireNonNull(attachmentsDir.listFiles());
 		String filename = attachmentsDir.getAbsolutePath() + "\\Documents available for DataSource Result .xls";
 		File fileUpload = new File(filename);
-        setAppianData(fileUpload);
+        documentId = uploadExcel(fileUpload);
 
 	}
-	private void setAppianData(File file) throws Exception{
-		// Gets the map of workflow variables containing those defined into the robot configuration page
+	private String uploadExcel(File file) throws Exception{
+		String endpointUpload = ((String)this.server.getEnvironmentVariables().get("ExcelUploadEndpoint")).toString();
+		File uploadFile = file;
+		IAppian appianClient =IAppian.getInstance(this);
+		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance().uploadDocument(endpointUpload,uploadFile,"caseid-"+server.getParameters().get("caseId") +" "+Sheetname).build();
+		String response = appianClient.callWebApi(request).getBodyString();
+		String value = response.split(":")[1];
+		String output = value.split(" -")[0];
+		this.server.info("output:" + output);
+		return output;
+	}
+
+	public void setAppianData() throws Exception{
+		String executionId = server.getExecution(0).getRobotName() + "#" + server.getExecution(0).getCurrentExecution().getExecutionNumber();
 		Map<String, IRobotVariable> variables = server.getWorkflowVariables();
-
-// Gets the variable called "var1"
-		IRobotVariable rv = variables.get("var1");
-
-// Updates the value of var1 to the current value of item
-		rv.setValue(file);
+		IRobotVariable dID = variables.get("documentID");
+		dID.setValue(documentId);
+		IRobotVariable execId = variables.get("executionId");
+		execId.setValue(executionId);
+		IRobotVariable sourceType = variables.get("sourceType");
+		sourceType.setValue(Sheetname);
+		IRobotVariable caseId = variables.get("caseId");
+		caseId.setValue(server.getParameters().get(caseId));
+		IRobotVariable status = variables.get("status");
+		if(maxCountReached.contains("MaxCountReached")){
+			status.setValue("Success");
+		}
+		else{
+			status.setValue("Failed" + Sheetname);
+		}
 	}
 
 
 
-	/**
-	 * Method to UpdateAppianDB
-	 */
 
-	private void UpdateAppianDB() {
-
-	}
-
-	/**
+/**
 	 * Last action of the robot.
 	 */
 	public void end()  {
