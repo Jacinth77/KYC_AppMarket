@@ -70,7 +70,7 @@ public class RobotBrowserTemplate implements IRobot {
 	private IWebBrowserSupport browser;
 	/** The current item index. */
 	private int currentItemIndex;
-	private String maxCountReached = "MaxCountReached";
+	private String maxCountReached ;
 	private IKeyboard keyboard;
 	/** Browser type parameter **/
 	private String browserType = null;
@@ -360,6 +360,7 @@ public class RobotBrowserTemplate implements IRobot {
 
 		} catch (Exception e) {
 			server.info(e);
+			this.browserCleanUp();
 			exceptionflag = true;
 
 
@@ -436,6 +437,8 @@ public class RobotBrowserTemplate implements IRobot {
 			}
 			else
 			{
+
+				maxCountReached="MaxCountReached";
 				return maxCountReached;
 			}
         }
@@ -743,7 +746,7 @@ public class RobotBrowserTemplate implements IRobot {
 		String endpointUpload = ((String)this.server.getEnvironmentVariables().get("ExcelUploadEndpoint")).toString();
 		File uploadFile = file;
 		IAppian appianClient =IAppian.getInstance(this);
-		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance().uploadDocument(endpointUpload,uploadFile,"caseid-"+server.getParameters().get("caseId") +" "+Sheetname).build();
+		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance().uploadDocument(endpointUpload,uploadFile,"caseid-"+server.getParameters().get("caseId").toString() +" "+Sheetname).build();
 		String response = appianClient.callWebApi(request).getBodyString();
 		String value = response.split(":")[1];
 		String output = value.split(" -")[0];
@@ -760,14 +763,15 @@ public class RobotBrowserTemplate implements IRobot {
 		execId.setValue(executionId);
 		IRobotVariable sourceType = variables.get("sourceType");
 		sourceType.setValue(Sheetname);
-		IRobotVariable caseId = variables.get("caseId");
-		caseId.setValue(server.getParameters().get(caseId));
+//		IRobotVariable caseId = variables.get("caseId");
+//		caseId.setValue("123");
 		IRobotVariable status = variables.get("status");
 		if(maxCountReached.contains("MaxCountReached")){
-			status.setValue("Success");
+			status.setValue("Failed" + Sheetname);
+
 		}
 		else{
-			status.setValue("Failed" + Sheetname);
+			status.setValue("Success");
 		}
 	}
 
@@ -790,6 +794,7 @@ public class RobotBrowserTemplate implements IRobot {
 		server.info(executionId);
 		req.put("Execution Id ",executionId);
 		req.put("Case id", "1234");
+		server.info("request"+req);
 		// Calls the notifyProcessOfCompletion web API and passes the execution ID
 		IAppian appian = IAppian.getInstance(this);
 		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance()
@@ -804,7 +809,7 @@ public class RobotBrowserTemplate implements IRobot {
 		server.info("Response body: " + new String(response.getBodyBytes()));
 		String directory= "D:\\Output file\\";
 		FileUtils.cleanDirectory((new File(directory)));
-		browserCleanUp();
+		//browserCleanUp();
 		return  new String[0] ;
 	}
 
