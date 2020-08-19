@@ -70,7 +70,7 @@ public class RobotBrowserTemplate implements IRobot {
 	private IWebBrowserSupport browser;
 	/** The current item index. */
 	private int currentItemIndex;
-	private String maxCountReached ;
+	private String maxCountReached ="";
 	private IKeyboard keyboard;
 	/** Browser type parameter **/
 	private String browserType = null;
@@ -323,6 +323,10 @@ public class RobotBrowserTemplate implements IRobot {
 				{
 					Select(exr.getXpath().trim(), exr.getValue().trim());
 				}
+				else if (exr.getActions().contains("Wait"))
+				{
+					Waittime(Integer.parseInt(exr.getValue().trim()));
+				}
 				else if (exr.getActions().contains("CopyDatatoExcel"))
 				{
 					CopyDatatoExcel();
@@ -437,7 +441,6 @@ public class RobotBrowserTemplate implements IRobot {
 			}
 			else
 			{
-
 				maxCountReached="MaxCountReached";
 				return maxCountReached;
 			}
@@ -642,7 +645,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 * Method to wait for the element
 	 */
 
-	private void Wait(Integer time) throws InterruptedException {
+	private void Waittime(Integer time) throws InterruptedException {
 
 		TimeUnit.SECONDS.sleep(time);
 
@@ -736,8 +739,10 @@ public class RobotBrowserTemplate implements IRobot {
 	private void getFileLocation(String path) throws Exception {
 		File attachmentsDir = new File(path);
 		server.debug("Looking for files in: " + attachmentsDir.getAbsolutePath());
-		File[] filesToUpload = Objects.<File[]>requireNonNull(attachmentsDir.listFiles());
-		String filename = attachmentsDir.getAbsolutePath() + "\\Documents available for DataSource Result .xls";
+		//File[] filesToUpload = Objects.<File[]>requireNonNull(attachmentsDir.listFiles());
+		//String filename = attachmentsDir.getAbsolutePath() + "\\Documents available for DataSource Result .xls";
+		String filename = attachmentsDir.getAbsolutePath();
+		server.info("Filename :"+filename);
 		File fileUpload = new File(filename);
         documentId = uploadExcel(fileUpload);
 
@@ -746,12 +751,17 @@ public class RobotBrowserTemplate implements IRobot {
 		String endpointUpload = ((String)this.server.getEnvironmentVariables().get("ExcelUploadEndpoint")).toString();
 		File uploadFile = file;
 		IAppian appianClient =IAppian.getInstance(this);
-		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance().uploadDocument(endpointUpload,uploadFile,"caseid-"+server.getParameters().get("caseId").toString() +" "+Sheetname).build();
+		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance().uploadDocument(endpointUpload,uploadFile,"caseid-"+server.getParameters().get("caseId").toString() +" "+Sheetname+".xls").build();
+		server.info("Request : "+request);
+
 		String response = appianClient.callWebApi(request).getBodyString();
-		String value = response.split(":")[1];
-		String output = value.split(" -")[0];
-		this.server.info("output:" + output);
-		return output;
+
+		server.info("response : "+response);
+
+		/*String value = response.split(":")[1];
+		String output = value.split(" -")[0];*/
+		this.server.info("output:" + response.trim());
+		return  response.trim();
 	}
 
 	public void setAppianData() throws Exception{
@@ -763,8 +773,11 @@ public class RobotBrowserTemplate implements IRobot {
 		execId.setValue(executionId);
 		IRobotVariable sourceType = variables.get("sourceType");
 		sourceType.setValue(Sheetname);
-//		IRobotVariable caseId = variables.get("caseId");
-//		caseId.setValue("123");
+		IRobotVariable caseId = variables.get("caseid");
+
+
+		Integer caseidInt = Integer.parseInt(server.getParameters().get("caseId").toString());
+		caseId.setValue(caseidInt);
 		IRobotVariable status = variables.get("status");
 		if(maxCountReached.contains("MaxCountReached")){
 			status.setValue("Failed" + Sheetname);
@@ -783,6 +796,7 @@ public class RobotBrowserTemplate implements IRobot {
 	 */
 	public void end()  {
 
+		browserCleanUp();
 		server.info("End process");
 	}
 
@@ -793,7 +807,7 @@ public class RobotBrowserTemplate implements IRobot {
 				server.getExecution(0).getCurrentExecution().getExecutionNumber();
 		server.info(executionId);
 		req.put("Execution Id ",executionId);
-		req.put("Case id", "1234");
+		req.put("Case id", server.getParameters().get("caseId").toString());
 		server.info("request"+req);
 		// Calls the notifyProcessOfCompletion web API and passes the execution ID
 		IAppian appian = IAppian.getInstance(this);
@@ -807,8 +821,8 @@ public class RobotBrowserTemplate implements IRobot {
 
 		// Displays the result of the web API in the execution log for easy debugging
 		server.info("Response body: " + new String(response.getBodyBytes()));
-		String directory= "D:\\Output file\\";
-		FileUtils.cleanDirectory((new File(directory)));
+		//String directory= "D:\\Output file\\";
+		//FileUtils.cleanDirectory((new File(directory)));
 		//browserCleanUp();
 		return  new String[0] ;
 	}
