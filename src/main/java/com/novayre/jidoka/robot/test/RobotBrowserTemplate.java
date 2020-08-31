@@ -95,6 +95,8 @@ public class RobotBrowserTemplate implements IRobot {
 	private Integer RetryCount = 0;
 	private String Sheetname;
 	private String documentId;
+	private boolean IfFlag;
+	private boolean CancelFlag= false;
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
 
@@ -294,51 +296,42 @@ public class RobotBrowserTemplate implements IRobot {
 				ExcelDSRow exr = dataProvider.getCurrentItem();
 				server.info("Operations --"+exr.getActions());
 
-				if (exr.getActions().contains("Click") )
-				{
-					Click(exr.getXpath().trim(), exr.getValue().trim());
+                if (((exr.getActions().contains("endIf")) ||  (IfFlag)) && (CancelFlag =false))
+                {
+					if (exr.getActions().contains("Click")) {
+						Click(exr.getXpath().trim(), exr.getValue().trim());
+					} else if (exr.getActions().contains("Switch tab")) {
+						NavigateTab(exr.getValue().trim());
+					} else if (exr.getActions().contains("SendKey")) {
+						SendKeys(exr.getValue().trim());
+					} else if (exr.getActions().contains("URL")) {
+						HOME_URL = exr.getValue().trim();
+						openBrowser();
+					} else if (exr.getActions().contains("Read")) {
+						read(exr.getXpath().trim(), exr.getValue().trim());
+					} else if (exr.getActions().contains("Write")) {
+						write(exr.getXpath().trim(), exr.getValue().trim());
+					} else if (exr.getActions().contains("Select")) {
+						Select(exr.getXpath().trim(), exr.getValue().trim());
+					} else if (exr.getActions().contains("Wait")) {
+						Waittime(Integer.parseInt(exr.getValue().trim()));
+					} else if (exr.getActions().contains("CopyDatatoExcel")) {
+						CopyDatatoExcel();
+					} else if (exr.getActions().contains("SetFilePath")) {
+						getFileLocation(exr.getValue().trim());
+					} else if (exr.getActions().contains("IfLesser")) {
+						iflesser(exr.getValue().trim());
+					} else if (exr.getActions().contains("IfGreater")) {
+						ifGreater(exr.getValue().trim());
+					} else if (exr.getActions().contains("IfEqual")) {
+						ifEqual(exr.getValue().trim());
+					} else if (exr.getActions().contains("endIf")) {
+						IfFlag = true;
+					}
+					else if (exr.getActions().contains("Cancel")) {
+						CancelFlag = true;
+					}
 				}
-				else if (exr.getActions().contains("Switch tab"))
-				{
-					NavigateTab(exr.getValue().trim());
-				}
-				else if (exr.getActions().contains("SendKey"))
-				{
-					SendKeys(exr.getValue().trim());
-				}
-				else if (exr.getActions().contains("URL") )
-				{
-					HOME_URL = exr.getValue().trim();
-					openBrowser();
-				}
-				else if (exr.getActions().contains("Read"))
-				{
-					read(exr.getXpath().trim(), exr.getValue().trim());
-				}
-				else if (exr.getActions().contains("Write") )
-				{
-					write(exr.getXpath().trim(), exr.getValue().trim());
-				}
-				else if (exr.getActions().contains("Select"))
-				{
-					Select(exr.getXpath().trim(), exr.getValue().trim());
-				}
-				else if (exr.getActions().contains("Wait"))
-				{
-					Waittime(Integer.parseInt(exr.getValue().trim()));
-				}
-				else if (exr.getActions().contains("CopyDatatoExcel"))
-				{
-					CopyDatatoExcel();
-				}
-				else if (exr.getActions().contains("SetFilePath"))
-				{
-                    getFileLocation(exr.getValue().trim());
-				}
-//				else if (exr.getActions().contains("UpdateAppianDB"))
-//				{
-//					UpdateAppianDB();
-//				}
 
 
 
@@ -425,6 +418,131 @@ public class RobotBrowserTemplate implements IRobot {
         }
         return "no";
     }
+
+
+	/**
+	 * Method for If conditions
+	 */
+
+	public void ifEqual(String condition) {
+
+		String[] arrOfStr = condition.split(",");
+		String Value1 = arrOfStr[0];
+		String Value2 = arrOfStr[1];
+
+		if (Value1.toLowerCase().trim().contains("customercountry")
+				||  Value1.toLowerCase().trim().contains("customername")
+				||  Value1.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value1=server.getParameters().get(Value1).toString();
+		}
+
+		if (Value2.toLowerCase().trim().contains("customercountry")
+				||  Value2.toLowerCase().trim().contains("customername")
+				||  Value2.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value2=server.getParameters().get(Value2).toString();
+		}
+
+		if (Value1.contains("XXRead"))
+		{
+			Value1 = dict.get(Value1);
+		}
+
+		if (Value2.contains("XXRead"))
+		{
+			Value2 = dict.get(Value2);
+		}
+
+		if (Value1!=Value2)
+		{
+			IfFlag = false;
+		}
+
+	}
+
+	public void ifGreater(String condition) {
+
+		String[] arrOfStr = condition.split(",");
+		String Value1 = arrOfStr[0];
+		String Value2 = arrOfStr[1];
+
+		if (Value1.toLowerCase().trim().contains("customercountry")
+				||  Value1.toLowerCase().trim().contains("customername")
+				||  Value1.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value1=server.getParameters().get(Value1).toString();
+		}
+
+		if (Value2.toLowerCase().trim().contains("customercountry")
+				||  Value2.toLowerCase().trim().contains("customername")
+				||  Value2.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value2=server.getParameters().get(Value2).toString();
+		}
+
+		if (Value1.contains("XXRead"))
+		{
+			Value1 = dict.get(Value1);
+		}
+
+		if (Value2.contains("XXRead"))
+		{
+			Value2 = dict.get(Value2);
+		}
+
+		if (Integer.parseInt(Value1) <= Integer.parseInt(Value2))
+		{
+			IfFlag = false;
+		}
+
+	}
+
+	public void iflesser(String condition) {
+
+		String[] arrOfStr = condition.split(",");
+		String Value1 = arrOfStr[0];
+		String Value2 = arrOfStr[1];
+
+		if (Value1.toLowerCase().trim().contains("customercountry")
+				||  Value1.toLowerCase().trim().contains("customername")
+				||  Value1.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value1=server.getParameters().get(Value1).toString();
+		}
+
+		if (Value2.toLowerCase().trim().contains("customercountry")
+				||  Value2.toLowerCase().trim().contains("customername")
+				||  Value2.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value2=server.getParameters().get(Value2).toString();
+		}
+
+		if (Value1.contains("XXRead"))
+		{
+			Value1 = dict.get(Value1);
+		}
+
+		if (Value2.contains("XXRead"))
+		{
+			Value2 = dict.get(Value2);
+		}
+
+		if (Integer.parseInt(Value1) >= Integer.parseInt(Value2))
+		{
+			IfFlag = false;
+		}
+
+	}
+
+
+
 
 	/**
 	 * Method returns true if retry count is lesser than 3
