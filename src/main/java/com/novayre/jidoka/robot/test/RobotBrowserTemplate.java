@@ -95,7 +95,7 @@ public class RobotBrowserTemplate implements IRobot {
 	private Integer RetryCount = 0;
 	private String Sheetname;
 	private String documentId;
-	private boolean IfFlag;
+	private boolean IfFlag = true;
 	private boolean CancelFlag= false;
 	public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
@@ -114,7 +114,7 @@ public class RobotBrowserTemplate implements IRobot {
 		
 		browser = IWebBrowserSupport.getInstance(this, client);
 
-		qmanager = server.getQueueManager();
+		//qmanager = server.getQueueManager();
 
         //exr = new ExcelDSRow();
 
@@ -188,6 +188,7 @@ public class RobotBrowserTemplate implements IRobot {
 
 		// we save the screenshot, it can be viewed in robot execution trace page on the console
 		server.sendScreen("Screen after load page: " + HOME_URL);
+
 		
 		server.setCurrentItemResultToOK("Success");
 	}
@@ -206,7 +207,7 @@ public class RobotBrowserTemplate implements IRobot {
 		// If the browser was initialized, close it
 		if (browser != null) {
 			try {
-				browser.close();
+				browser.getDriver().quit();
 				browser = null;
 
 			} catch (Exception e) { // NOPMD
@@ -221,7 +222,9 @@ public class RobotBrowserTemplate implements IRobot {
 				switch (EBrowsers.valueOf(browserType)) {
 
 				case CHROME:
-					client.killAllProcesses("chromedriver.exe", 1000);
+					client.killAllProcesses("chrome.exe", 1000);
+					Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe");
+
 					break;
 
 				case INTERNET_EXPLORER:
@@ -244,45 +247,18 @@ public class RobotBrowserTemplate implements IRobot {
 
 	}
 
-	/**
-	 * Read Excel and Add to Queue operations
-
-
-	public void ReadAddQueue() throws Exception {
-		String fileNameInput = server.getParameters().get("RegionDatasource");
-		Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
-		String fileType = FilenameUtils.getExtension(inputFile.toString());
-		String sourceDir =inputFile.toString();
-//		File sourceFile = new File(sourceDir);
-//		server.info("sourceFile"+ sourceFile);
-
-        excelFile = sourceDir;
-        server.info("Keyvaue: " + excelFile );
-        selectedQueueID = queueCommons.createQueue(excelFile);
-        server.info("Queue ID: " + selectedQueueID);
-        //addItemsToQueue();
-
-		currentQueue = queueCommons.getQueueFromId(selectedQueueID);
-
-		server.info("queue name: " + currentQueue);
-
-		if (currentQueue == null) {
-			server.debug("Queue not found");
-			return;
-		}
-
-		server.setNumberOfItems(currentQueue.pendingItems());
-	}*/
 
 	public void PerformOperation() throws Exception {
 
 		server.info("add items ");
         String fileNameInput = server.getParameters().get("regionDatasource");
+        server.info(fileNameInput);
         Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
         String fileType = FilenameUtils.getExtension(inputFile.toString());
         String sourceDir =inputFile.toString();
         excelFile = sourceDir;
 		String fileInput = Paths.get(excelFile).toFile().toString();
+		server.info(fileInput);
 
 		Sheetname = "Datasource"+ CurrentSheetCount;
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
@@ -295,9 +271,13 @@ public class RobotBrowserTemplate implements IRobot {
 
 				ExcelDSRow exr = dataProvider.getCurrentItem();
 				server.info("Operations --"+exr.getActions());
+				server.info("getField_Name --"+exr.getField_Name());
+				server.info("CancelFlag --"+CancelFlag);
+				server.info("IfFlag --"+IfFlag);
 
-                if (((exr.getActions().contains("endIf")) ||  (IfFlag)) && (CancelFlag =false))
+                if (exr.getActions().contains("endIf") ||  IfFlag == true  && CancelFlag ==false)
                 {
+                	server.info("Inside operations");
 					if (exr.getActions().contains("Click")) {
 						Click(exr.getXpath().trim(), exr.getValue().trim());
 					} else if (exr.getActions().contains("Switch tab")) {
@@ -331,6 +311,9 @@ public class RobotBrowserTemplate implements IRobot {
 					else if (exr.getActions().contains("Cancel")) {
 						CancelFlag = true;
 					}
+						else if (exr.getActions().contains("IfNotEqual")) {
+						ifNotEqual(exr.getValue().trim());
+					}
 				}
 
 
@@ -357,7 +340,11 @@ public class RobotBrowserTemplate implements IRobot {
 
 		} catch (Exception e) {
 			server.info(e);
-			this.browserCleanUp();
+			//browserCleanUp();
+			//browser.getDriver().quit();
+			//startUp();
+
+
 			exceptionflag = true;
 
 
@@ -456,12 +443,60 @@ public class RobotBrowserTemplate implements IRobot {
 			Value2 = dict.get(Value2);
 		}
 
+
 		if (Value1!=Value2)
 		{
 			IfFlag = false;
 		}
 
 	}
+
+	/**
+	 * Method for If conditions
+	 */
+
+	public void ifNotEqual(String condition) {
+
+		String[] arrOfStr = condition.split(",");
+		String Value1 = arrOfStr[0];
+		String Value2 = arrOfStr[1];
+
+		if (Value1.toLowerCase().trim().contains("customercountry")
+				||  Value1.toLowerCase().trim().contains("customername")
+				||  Value1.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value1=server.getParameters().get(Value1).toString();
+		}
+
+		if (Value2.toLowerCase().trim().contains("customercountry")
+				||  Value2.toLowerCase().trim().contains("customername")
+				||  Value2.toLowerCase().trim().contains("customerpassport"))
+
+		{
+			Value2=server.getParameters().get(Value2).toString();
+		}
+
+		if (Value1.contains("XXRead"))
+		{
+			Value1 = dict.get(Value1);
+		}
+
+		if (Value2.contains("XXRead"))
+		{
+			Value2 = dict.get(Value2);
+		}
+
+		server.info(Value1+ "----"+Value2);
+
+
+		if (Value1.trim().contains(Value2.trim()))
+		{
+			IfFlag = false;
+		}
+
+	}
+
 
 	public void ifGreater(String condition) {
 
@@ -692,6 +727,7 @@ public class RobotBrowserTemplate implements IRobot {
 		//	Path.replace("XXINPUTXX",Value);
 		//}
 
+
 		browser.waitElement(By.xpath(Path),10);
 		String RedValue=browser.getDriver().findElement(By.xpath(Path)).getText();
 		dict.put(Key, RedValue);
@@ -776,9 +812,28 @@ public class RobotBrowserTemplate implements IRobot {
 
 	private void SendKeys(String Key) throws InterruptedException {
 
-		//driver.findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL +"\t");
-		TimeUnit.SECONDS.sleep(10);
-		browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Key);
+		if (Key.toLowerCase().trim().contains("copy"))
+		{
+			browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL + "c");
+		}
+		if (Key.toLowerCase().trim().contains("selectall"))
+		{
+			browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL + "a");
+		}
+		if (Key.toLowerCase().trim().contains("paste"))
+		{
+			browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL + "v");
+
+		}
+		if (Key.toLowerCase().trim().contains("paste"))
+		{
+			browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Keys.PAGE_DOWN);
+
+		}
+
+		//driver.findElement(By.cssSelector("body")).sendKeys(Keys. +"\t");
+		//TimeUnit.SECONDS.sleep(10);
+		//browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Key);
 		//browser.getDriver().findElement(By.xpath(Path)).sendKeys(Key);
 
 	}
@@ -822,10 +877,19 @@ public class RobotBrowserTemplate implements IRobot {
 		TimeUnit.SECONDS.sleep(5);
 		client.typeText(client.getKeyboardSequence().pressControl().type("v").releaseControl());
 		TimeUnit.SECONDS.sleep(5);
-		client.typeText(client.getKeyboardSequence().pressControl().type("s").releaseControl());
+		client.typeText(client.getKeyboardSequence().pressControl().type("a").releaseControl());
 		TimeUnit.SECONDS.sleep(5);
+		client.typeText(client.getKeyboardSequence().pressAlt().type("h").releaseAlt());
+		TimeUnit.SECONDS.sleep(3);
+		client.typeText(client.getKeyboardSequence().type("o"));
+		TimeUnit.SECONDS.sleep(2);
+		client.typeText(client.getKeyboardSequence().type("i"));
+
+		client.typeText(client.getKeyboardSequence().pressControl().type("s").releaseControl());
+		TimeUnit.SECONDS.sleep(3);
 		Runtime.getRuntime().exec("taskkill /F /IM EXCEL.exe");
 
+		uploadExcel((Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx")).toFile());
 
 	}
 
