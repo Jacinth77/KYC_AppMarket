@@ -15,7 +15,7 @@ import com.novayre.jidoka.data.provider.api.IJidokaExcelDataProvider;
 import com.novayre.jidoka.client.api.queue.IQueueManager;
 import com.sun.java.swing.plaf.windows.resources.windows;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+
 
 import com.novayre.jidoka.browser.api.EBrowsers;
 import com.novayre.jidoka.browser.api.IWebBrowserSupport;
@@ -24,6 +24,7 @@ import com.novayre.jidoka.client.api.IRobot;
 import com.novayre.jidoka.client.api.JidokaFactory;
 import com.novayre.jidoka.client.api.annotations.Robot;
 import com.novayre.jidoka.client.api.multios.IClient;
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.formula.functions.Count;
 import org.apache.poi.ss.usermodel.Row;
 import org.openqa.selenium.By;
@@ -95,9 +96,10 @@ private IExcel excel;
 private Boolean exceptionflag = false;
 private Integer RetryCount = 0;
 private String Sheetname;
-private String documentId;
+private String documentId = null;
 private boolean IfFlag = true;
 private boolean CancelFlag= false;
+private String fieldname;
 public  Dictionary<String, String> dict = new Hashtable<String, String>();
 
 
@@ -114,6 +116,8 @@ public boolean startUp() throws Exception {
 		client = IClient.getInstance(this);
 
 		browser = IWebBrowserSupport.getInstance(this, client);
+
+		keyboard=client.getKeyboard();
 
 		//qmanager = server.getQueueManager();
 
@@ -173,6 +177,8 @@ public void openBrowser() throws Exception  {
 		navigateToWeb();
 
 		}
+
+
 
 /**
  * Navigate to Web Page
@@ -307,6 +313,8 @@ public void PerformOperation() throws Exception {
 		server.info("getField_Name --"+exr.getField_Name());
 		server.info("CancelFlag --"+CancelFlag);
 		server.info("IfFlag --"+IfFlag);
+		fieldname=exr.getField_Name();
+
 
 		if (exr.getActions().contains("endIf") ||  IfFlag == true  && CancelFlag ==false)
 		{
@@ -347,6 +355,9 @@ public void PerformOperation() throws Exception {
 		else if (exr.getActions().contains("IfNotEqual")) {
 		ifNotEqual(exr.getValue().trim());
 		}
+		else if(exr.getActions().contains("checkElement")){
+			checkElement(exr.getXpath().trim());
+		}
 		}
 
 
@@ -373,12 +384,10 @@ public void PerformOperation() throws Exception {
 
 		} catch (Exception e) {
 		server.info(e);
-		//browserCleanUp();
-		//browser.getDriver().quit();
-		//startUp();
 
 
 		exceptionflag = true;
+		keyboard.altF(4);
 
 
 		}
@@ -433,6 +442,12 @@ public String HasMoreSheets() {
 		if(CurrentSheetCount<sheetCount){
 		CurrentSheetCount=CurrentSheetCount+1;
 
+		RetryCount = 1;
+		documentId = null;
+		CancelFlag= false;
+		maxCountReached ="";
+		keyboard.altF(4);
+
 		return "yes";
 
 		}
@@ -449,6 +464,9 @@ public void ifEqual(String condition) {
 		String[] arrOfStr = condition.split(",");
 		String Value1 = arrOfStr[0];
 		String Value2 = arrOfStr[1];
+
+		server.info("Value1  "+Value1);
+		server.info("Value1  "+Value2);
 
 		if (Value1.toLowerCase().trim().contains("customercountry")
 		||  Value1.toLowerCase().trim().contains("customername")
@@ -468,7 +486,9 @@ public void ifEqual(String condition) {
 
 		if (Value1.contains("XXRead"))
 		{
-		Value1 = dict.get(Value1);
+			server.info("Inside XXREAD");
+			Value1 = dict.get(Value1);
+
 		}
 
 		if (Value2.contains("XXRead"))
@@ -476,9 +496,14 @@ public void ifEqual(String condition) {
 		Value2 = dict.get(Value2);
 		}
 
+		server.info("("+Value1.trim()+")");
+		server.info("("+Value2.trim()+")");
 
-		if (Value1!=Value2)
+
+		if (! Value1.trim().equals(Value2.trim()))
 		{
+			server.info("after trim");
+
 		IfFlag = false;
 		}
 
@@ -621,6 +646,7 @@ public String RetryRequired() throws Exception {
 		//browserkill();
 
 		if (exceptionflag) {
+			exceptionflag = false;
 
 		if (RetryCount < 3)
 		{
@@ -766,6 +792,8 @@ private void read(String Path,String Key) {
 
 		browser.waitElement(By.xpath(Path),10);
 		String RedValue=browser.getDriver().findElement(By.xpath(Path)).getText();
+		server.info("RedValue"+RedValue);
+		server.info("Key"+Key);
 		dict.put(Key, RedValue);
 
 		}
@@ -965,13 +993,14 @@ private void CopyDatatoExcel() throws Exception {
 		TimeUnit.SECONDS.sleep(2);
 		client.typeText(client.getKeyboardSequence().type("i"));
 
+
 		client.typeText(client.getKeyboardSequence().pressControl().type("s").releaseControl());
 		TimeUnit.SECONDS.sleep(3);
 		Runtime.getRuntime().exec("taskkill /F /IM EXCEL.exe");
 
-		uploadExcel((Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx")).toFile());
+	    documentId=uploadExcel((Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx")).toFile());
 
-		}
+}
 
 		private void createexcel(String documentName) throws Exception {
 		String robotDir = server.getCurrentDir();
@@ -1026,6 +1055,22 @@ private void CopyDatatoExcel() throws Exception {
 		return  response.trim();
 		}
 
+		public void checkElement(String checkElementValue){
+		boolean resultFound = browser.existsElement(By.xpath(checkElementValue));
+
+		server.info("resultFound"+resultFound);
+
+
+		if (resultFound) {
+			IfFlag =true;
+		}
+		else{
+
+			IfFlag =false;
+		}
+
+		}
+
 		public void setAppianData() throws Exception{
 		String executionId = server.getExecution(0).getRobotName() + "#" + server.getExecution(0).getCurrentExecution().getExecutionNumber();
 		Map<String, IRobotVariable> variables = server.getWorkflowVariables();
@@ -1042,7 +1087,10 @@ private void CopyDatatoExcel() throws Exception {
 		caseId.setValue(caseidInt);
 		IRobotVariable status = variables.get("status");
 		if(maxCountReached.contains("MaxCountReached")){
-		status.setValue("Failed" + Sheetname);
+			status.setValue("Failed" + Sheetname);
+
+			IRobotVariable additionalDetails = variables.get("additionalDetails");
+			additionalDetails.setValue(fieldname);
 
 		}
 		else{
