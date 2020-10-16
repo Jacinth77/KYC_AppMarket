@@ -119,11 +119,6 @@ public boolean startUp() throws Exception {
 
 		keyboard=client.getKeyboard();
 
-		//qmanager = server.getQueueManager();
-
-		//exr = new ExcelDSRow();
-
-
 		return IRobot.super.startUp();
 
 		}
@@ -289,15 +284,15 @@ default:
 
 public void PerformOperation() throws Exception {
 
-		server.info("add items ");
+
 		String fileNameInput = server.getParameters().get("regionDatasource");
-		server.info(fileNameInput);
+		server.info("FileName  :"+fileNameInput);
 		Path inputFile = Paths.get(server.getCurrentDir(), fileNameInput);
 		String fileType = FilenameUtils.getExtension(inputFile.toString());
 		String sourceDir =inputFile.toString();
 		excelFile = sourceDir;
 		String fileInput = Paths.get(excelFile).toFile().toString();
-		server.info(fileInput);
+		server.info("File :" +fileInput);
 
 		Sheetname = "Datasource"+ CurrentSheetCount;
 		dataProvider = IJidokaDataProvider.getInstance(this, IJidokaDataProvider.Provider.EXCEL);
@@ -318,7 +313,7 @@ public void PerformOperation() throws Exception {
 
 		if (exr.getActions().contains("endIf") ||  IfFlag == true  && CancelFlag ==false)
 		{
-		server.info("Inside operations");
+
 		if (exr.getActions().contains("Click")) {
 		Click(exr.getXpath().trim(), exr.getValue().trim());
 		} else if (exr.getActions().contains("Switch tab")) {
@@ -360,83 +355,30 @@ public void PerformOperation() throws Exception {
 		}
 		}
 
-
-
-				/*CreateItemParameters itemParameters = new CreateItemParameters();
-
-				// Set the item parameters
-				itemParameters.setKey(er.getField_Name());
-				server.info("Key " + er.getField_Name());
-				itemParameters.setPriority(EPriority.NORMAL);
-				itemParameters.setQueueId(selectedQueueID);
-				itemParameters.setReference(String.valueOf(dataProvider.getCurrentItemNumber()));
-
-				Map<String, String> functionalData = new HashMap<>();
-				functionalData.put(ExcelRowMapper.Field_Name,er.getField_Name());
-				functionalData.put(ExcelRowMapper.Xpath,er.getXpath());
-				functionalData.put(ExcelRowMapper.Value,er.getValue());
-				functionalData.put(ExcelRowMapper.Actions,er.getActions());
-				itemParameters.setFunctionalData(functionalData);
-				qmanager.createItem(itemParameters);
-				server.debug(String.format("Added item to queue %s with id %s", itemParameters.getQueueId(), itemParameters.getKey()));
-				*/
 		}
 
 		} catch (Exception e) {
-		server.info(e);
-
 
 		exceptionflag = true;
 		keyboard.altF(4);
-
 
 		}
 
 		finally {
 
-		try {
-		// Close the excel file
+		try
+		{
 		dataProvider.close();
-		} catch (IOException e) {
-		//throw new JidokaQueueException(e);
+		}
+		catch (IOException e)
+		{
 		dataProvider.flush();
 		}
 		}
 		}
 
-/**
- * Method returns true if there are items in Queue
-
-
- public String HasMoreItems() throws Exception {
- currentItemQueue = queueCommons.getNextItem(currentQueue);
-
- if (currentItemQueue != null) {
-
- // set the stats for the current item
- server.setCurrentItem(currentItemIndex++, currentItemQueue.key());
- //ExcelDSRow exr = new ExcelDSRow();
- //server.info("first name" + currentItemQueue.functionalData().get(TestPOC.First_Namne));
- exr.setField_Name(currentItemQueue.functionalData().get(ExcelRowMapper.Field_Name));
- exr.setXpath(currentItemQueue.functionalData().get(ExcelRowMapper.Xpath));
- exr.setValue(currentItemQueue.functionalData().get(ExcelRowMapper.Value));
- exr.setActions(currentItemQueue.functionalData().get(ExcelRowMapper.Actions));
-
- server.info("Operations inhas no more items"+exr.getActions());
- return "Yes";
- }
-
- return "No";
- }
-
-
-
- /**
- * Method returns true if there are data present in sheets
- */
-
 public String HasMoreSheets() {
-		server.info("Inside HasSheet Method");
+
 		int sheetCount =dataProvider.getExcel().getWorkbook().getNumberOfSheets();
 		server.info("sheetCount" + sheetCount);
 		if(CurrentSheetCount<sheetCount){
@@ -454,7 +396,6 @@ public String HasMoreSheets() {
 		return "no";
 		}
 
-
 /**
  * Method for If conditions
  */
@@ -465,8 +406,6 @@ public void ifEqual(String condition) {
 		String Value1 = arrOfStr[0];
 		String Value2 = arrOfStr[1];
 
-		server.info("Value1  "+Value1);
-		server.info("Value1  "+Value2);
 
 		if (Value1.toLowerCase().trim().contains("customercountry")
 		||  Value1.toLowerCase().trim().contains("customername")
@@ -486,7 +425,7 @@ public void ifEqual(String condition) {
 
 		if (Value1.contains("XXRead"))
 		{
-			server.info("Inside XXREAD");
+
 			Value1 = dict.get(Value1);
 
 		}
@@ -496,13 +435,11 @@ public void ifEqual(String condition) {
 		Value2 = dict.get(Value2);
 		}
 
-		server.info("("+Value1.trim()+")");
-		server.info("("+Value2.trim()+")");
 
 
 		if (! Value1.trim().equals(Value2.trim()))
 		{
-			server.info("after trim");
+
 
 		IfFlag = false;
 		}
@@ -545,7 +482,7 @@ public void ifNotEqual(String condition) {
 		Value2 = dict.get(Value2);
 		}
 
-		server.info(Value1+ "----"+Value2);
+
 
 
 		if (Value1.trim().contains(Value2.trim()))
@@ -634,9 +571,6 @@ public void iflesser(String condition) {
 
 		}
 
-
-
-
 /**
  * Method returns true if retry count is lesser than 3
  */
@@ -666,54 +600,9 @@ public String RetryRequired() throws Exception {
 
 		}
 
-
-/**
- * Method will call corresponding methods based on queue operation
-
-
- public void  QueueOperations() throws Exception {
-
-
- server.info("Operations --"+exr.getActions());
-
- if (exr.getActions().contains("Click") ) {
- Click(exr.getXpath().trim(), exr.getValue().trim());
- } else if (exr.getActions().contains("Switch tab")) {
- NavigateTab(exr.getValue().trim());
- } else if (exr.getActions().contains("SendKey")) {
- SendKeys(exr.getValue().trim());
- } else if (exr.getActions().contains("URL") ) {
- HOME_URL = exr.getValue().trim();
- openBrowser();
- } else if (exr.getActions().contains("Read")) {
- read(exr.getXpath().trim(), exr.getValue().trim());
-
- } else if (exr.getActions().contains("Write") ) {
- write(exr.getXpath().trim(), exr.getValue().trim());
-
- } else if (exr.getActions().contains("Select")) {
-
- Select(exr.getXpath().trim(), exr.getValue().trim());
-
- } else if (exr.getActions().contains("CopyDatatoExcel")) {
-
- CopyDatatoExcel(exr.getValue().trim());
-
- } else if (exr.getActions().contains("UploadfilestoAppian")) {
-
-
- } else if (exr.getActions().contains("UpdateAppianDB")) {
-
-
- }
- }
-
- /*
- * Update item queue. This method is a sample to show how toupdate the first
- * element on the functional data map by adding the text " - MODIFIED"
- *
- * @throws JidokaQueueException the Jidoka queue exception
- */
+	/**
+	 * Method to update Item Queue
+	 */
 public void updateItemQueue() throws JidokaQueueException, InterruptedException {
 
 		Map<String, String> funcData = currentItemQueue.functionalData();
@@ -784,27 +673,16 @@ private void Click(String Path,String Value) {
 
 private void read(String Path,String Key) {
 
-		//if (Path.contains("XXINPUTXX")){
-		//	String Value = dict.get(ValueKey);
-		//	Path.replace("XXINPUTXX",Value);
-		//}
-
-
 		browser.waitElement(By.xpath(Path),10);
 		String RedValue=browser.getDriver().findElement(By.xpath(Path)).getText();
-		server.info("RedValue"+RedValue);
-		server.info("Key"+Key);
 		dict.put(Key, RedValue);
 
 		}
-
 /**
  * Method to write element
  */
 
 private void write(String Path,String Value) {
-
-		server.info("Write value"+ Value.toLowerCase().trim());
 
 		if (Path.contains("XXINPUTXX"))
 		{
@@ -818,23 +696,20 @@ private void write(String Path,String Value) {
 		Path.replace("XXRead",ReplaceValue);
 		}
 
-
-
 		if  (Value.toLowerCase().trim().contains("customercountry")
 		||  Value.toLowerCase().trim().contains("customername")
 		||  Value.toLowerCase().trim().contains("customerpassport"))
 
 		{
-		server.info("Inside");
+
 		Value=server.getParameters().get(Value).toString();
-		server.info(Value);
+
 		}
 
 		if (Value.contains("XXRead"))
 		{
 		Value = dict.get(Value);
 		}
-
 
 		browser.waitElement(By.xpath(Path),10);
 		browser.textFieldSet(By.xpath(Path),Value,true);
@@ -869,13 +744,11 @@ private void Waittime(Integer time) throws InterruptedException {
 
 		}
 
-
 /**
  * Method to send operations as keyboad strokes
  */
 
 private void SendKeys(String Key) throws InterruptedException {
-
 
 		if (Key.toLowerCase().trim().contains("copy"))
 		{
@@ -934,16 +807,6 @@ private void SendKeys(String Key) throws InterruptedException {
 		client.typeText(client.getKeyboardSequence().pressAlt().type(altkey).releaseAlt());
 
 		}
-
-
-		/*client.typeText(client.getKeyboardSequence().pressControl().type("a").releaseControl());
-		TimeUnit.SECONDS.sleep(5);
-		client.typeText(client.getKeyboardSequence().pressAlt().type("h").releaseAlt());
-		//driver.findElement(By.cssSelector("body")).sendKeys(Keys. +"\t");
-		//TimeUnit.SECONDS.sleep(10);
-		//browser.getDriver().findElement(By.cssSelector("body")).sendKeys(Key);
-		//browser.getDriver().findElement(By.xpath(Path)).sendKeys(Key);*/
-
 		}
 
 /**
@@ -958,7 +821,6 @@ private void Select(String Id,String Value) {
 		if (Value.toLowerCase().trim().contains("customercountry")
 		||  Value.toLowerCase().trim().contains("customername")
 		||  Value.toLowerCase().trim().contains("customerpassport"))
-
 		{
 		Value=server.getParameters().get(Value).toString();
 		}
@@ -967,12 +829,9 @@ private void Select(String Id,String Value) {
 		{
 		Value = dict.get(Value);
 		}
-
 		Select dropdown = new Select(browser.getDriver().findElement(By.id(Id)));
 		dropdown.selectByVisibleText(Value);
-
 		}
-
 /**
  * Method to CopyDatatoExcel
  */
@@ -992,19 +851,21 @@ private void CopyDatatoExcel() throws Exception {
 		client.typeText(client.getKeyboardSequence().type("o"));
 		TimeUnit.SECONDS.sleep(2);
 		client.typeText(client.getKeyboardSequence().type("i"));
-
-
 		client.typeText(client.getKeyboardSequence().pressControl().type("s").releaseControl());
 		TimeUnit.SECONDS.sleep(3);
 		Runtime.getRuntime().exec("taskkill /F /IM EXCEL.exe");
-
 	    documentId=uploadExcel((Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx")).toFile());
-
+	    String path = Paths.get(server.getCurrentDir(), Sheetname+ ".xlsx").toString();
+	    File obj = new File(path);
+	    obj.delete(); //delete created file
 }
+	/**
+	 * Method to create excel
+	 */
 
 		private void createexcel(String documentName) throws Exception {
 		String robotDir = server.getCurrentDir();
-		this.server.info("robotDir  " + robotDir);
+
 		//String name = "Documents available for " + service + ".xls";
 
 		String name = documentName+".XLSX";
@@ -1012,7 +873,7 @@ private void CopyDatatoExcel() throws Exception {
 		File file = Paths.get(robotDir, name).toFile();
 		String excelPath = file.getAbsolutePath();
 
-		server.info(excelPath);
+		server.info("Excel Path  :"+excelPath);
 
 		//String sheet = "Source";
 		excel.create(excelPath, EExcelType.XLSX);
@@ -1026,7 +887,9 @@ private void CopyDatatoExcel() throws Exception {
 		/**
 		 * Method to UploadfilestoAppian
 		 */
-
+/**
+ * Method to getFileLocation
+ */
 		private void getFileLocation(String path) throws Exception {
 		File attachmentsDir = new File(path);
 		server.debug("Looking for files in: " + attachmentsDir.getAbsolutePath());
@@ -1036,6 +899,8 @@ private void CopyDatatoExcel() throws Exception {
 		server.info("Filename :"+filename);
 		File fileUpload = new File(filename);
 		documentId = uploadExcel(fileUpload);
+		File myObj = new File(path);
+		myObj.delete(); //delete downloaded file
 
 		}
 		private String uploadExcel(File file) throws Exception{
@@ -1071,6 +936,10 @@ private void CopyDatatoExcel() throws Exception {
 
 		}
 
+/**
+ * Method to Set Appian Data
+ */
+
 		public void setAppianData() throws Exception{
 		String executionId = server.getExecution(0).getRobotName() + "#" + server.getExecution(0).getCurrentExecution().getExecutionNumber();
 		Map<String, IRobotVariable> variables = server.getWorkflowVariables();
@@ -1098,9 +967,6 @@ private void CopyDatatoExcel() throws Exception {
 		}
 		}
 
-
-
-
 /**
  * Last action of the robot.
  */
@@ -1110,37 +976,12 @@ private void CopyDatatoExcel() throws Exception {
 		server.info("End process");
 		}
 
+/**
+ * CleanUP method
+ * */
 		public String[] cleanUp() throws Exception
 		{
 			return  new String[0];
 		}}
-
-		/*HashMap<String, String> req = new HashMap<>();
-		// Constructs the execution ID to pass to the web API
-		String executionId = server.getExecution(0).getRobotName() + "#" +
-				server.getExecution(0).getCurrentExecution().getExecutionNumber();
-		server.info(executionId);
-		req.put("executionId",executionId);
-		req.put("caseId", server.getParameters().get("caseId").toString());
-		server.info("request"+req);
-		// Calls the notifyProcessOfCompletion web API and passes the execution ID
-		IAppian appian = IAppian.getInstance(this);
-		IWebApiRequest request = IWebApiRequestBuilderFactory.getFreshInstance()
-				//.post("notifyRPACompletionStatus")
-				.post(server.getEnvironmentVariables().get("NotifyAppianEndpoint").toString())
-				.body(req.toString())
-				.build();
-		server.info("Webapi-Request" + request.getQueryParameters());
-		IWebApiResponse response = appian.callWebApi(request);
-
-		// Displays the result of the web API in the execution log for easy debugging
-		server.info("Response body: " + new String(response.getBodyBytes()));
-		//String directory= "D:\\Output file\\";
-		//FileUtils.cleanDirectory((new File(directory)));
-		//browserCleanUp();
-		return  new String[0] ;
-	}
-	}*/
-
 
 
